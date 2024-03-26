@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coin Flip Game</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+
+        body {
+            margin: 0;
+            /* overflow: hidden; */
+        }
+        canvas {
+            display: flex;
+
+        }
+        .ResultBox{
+            background-color: white;
+            position: absolute;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 20px;
+            top: 50%;
+            left: 100px;
+            transform: translate(-50%,-50%);
+        }
+        .button{
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translate(-50%,-50%);
+        }
+        .button-75 {
+        align-items: center;
+        background-image: linear-gradient(135deg, #f5b030 40%, #f97800);
+        border: 0;
+        border-radius: 10px;
+        box-sizing: border-box;
+        color: #fff;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        font-family: "Codec cold",sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        height: 54px;
+        justify-content: center;
+        letter-spacing: .4px;
+        line-height: 1;
+        max-width: 100%;
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-top: 3px;
+        text-decoration: none;
+        text-transform: uppercase;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        }
+
+        .button-75:active {
+        outline: 0;
+        }
+
+        .button-75:hover {
+        outline: 0;
+        }
+
+        .button-75 span {
+        transition: all 200ms;
+        }
+
+        .button-75:hover span {
+        transform: scale(.9);
+        opacity: .75;
+        }
+
+        @media screen and (max-width: 991px) {
+        .button-75 {
+            font-size: 15px;
+            height: 50px;
+        }
+
+        .button-75 span {
+            line-height: 50px;
+        }
+        }
+
+    </style>
+</head>
+<body>
+<!-- 
+    <div class="container-fluid absolute">
+        <div class="row justify-content-center mt-5 absolute">
+            <button class="button button-75 " onclick="flipCoin()"><span class="text">FLIP COIN</span></button>
+        </div>
+    </div>
+
+    <button class="button button-75 " onclick="flipCoin()"><span class="text">FLIP COIN</span></button>
+
+    <div class="ResultBox">
+        <div class="Results">Heads :</div>
+        <div class="Results">Tails :</div>
+    </div> -->
+
+    <div class="absolute bottom-5 bg-transparent inline text-center">
+        <button class="absolute button button-75  " onclick="flipCoin()" > <span> FLIP COIN</span> </button>
+    </div>
+
+
+    
+
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Initialize scene, camera, renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(100,window.innerWidth/window.innerHeight, 0.5, 10000);
+        camera.position.z = 1;
+        const renderer = new THREE.WebGLRenderer();
+        
+        // renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(window.innerWidth,window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Add a light to the scene
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(10, 10, 50);
+        scene.add(directionalLight);
+
+        // Load textures for heads and tails
+        const loader = new THREE.TextureLoader();
+        const headTexture = loader.load('./HEAD.png');
+        const tailTexture = loader.load('./side.png');
+        const sideTexture = loader.load('./Tail.png')
+        
+        // Create a background image 
+        // const backgroundTexture = loader.load('./Background.png'); // Replace with your actual URL
+        // Create a cube geometry for the background
+        // const backgroundGeometry = new THREE.BoxGeometry(500, 500, 0); // Adjust size as needed
+        // const backgroundMaterial = new THREE.MeshBasicMaterial({ map: backgroundTexture, side: THREE.BackSide });
+        // const background = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+        // scene.add(background);
+        // console.log(window.innerWidth);
+        // if(window.innerWidth < 600 ){
+        //     background.position.z = -450;
+        // }else{
+        //     background.position.z = -200;
+        // }
+
+        const coinSize = window.innerWidth < 600 ? 1.5 : 2.5;
+
+        // Create a coin mesh
+        const geometry = new THREE.CylinderGeometry(coinSize, coinSize, 0.5, 100); // smaller coin
+        const material = [
+            new THREE.MeshPhongMaterial({ map: tailTexture, side: THREE.DoubleSide }), // Material for tail side
+            new THREE.MeshPhongMaterial({ map: headTexture, side: THREE.DoubleSide }),// Material for head side
+            new THREE.MeshPhongMaterial({ map: sideTexture, side: THREE.DoubleSide }),  
+        ];
+        const coin = new THREE.Mesh(geometry, material);
+        scene.add(coin);
+
+
+
+
+        // Add animation logic for flipping
+        let isFlipping = false;
+
+        coin.rotation.x = Math.PI / 2;
+        coin.position.set(0,0,0)
+
+ // Add event listeners to track mouse movements
+let isDragging = false;
+let previousMouseX = 0;
+window.addEventListener('mousedown', (event) => {
+    isDragging = true;
+    previousMouseX = event.clientX;
+});
+window.addEventListener('mousemove', (event) => {
+    if (isDragging) {
+        const deltaMoveX = event.clientX - previousMouseX;
+
+        // Update coin rotation around the X-axis based on mouse movement
+        coin.rotation.x += deltaMoveX * 0.01;
+
+        previousMouseX = event.clientX;
+    }
+});
+window.addEventListener('mouseup', () => {
+    isDragging = false;
+});
+    let TheResultDetail
+    console.log(TheResultDetail);
+
+
+        function flipCoin() {
+            if (!isFlipping) {
+                
+                isDragging = false;
+                isFlipping = true;
+                const flipDuration = 2000; // milliseconds
+                const startTime = Date.now();
+                function animate() {
+                    
+                    const elapsedTime = Date.now() - startTime;
+                    const t = Math.min(elapsedTime / flipDuration, 1);
+                    coin.rotation.z = Math.PI * t* 1;
+                    coin.rotation.x = Math.PI * (t - 0.5); // Rotate around x-axis
+                    coin.rotation.y = Math.PI * t * 10; // Increase rotation speed
+                    coin.position.y = Math.abs(Math.sin(t * Math.PI * 2)) * 2.5; // Bounce effect
+                    
+                    if (t < 1) {
+                            requestAnimationFrame(animate);
+                            
+                        } else {
+                            isFlipping = false;
+                            const result = Math.random() < 0.5 ? "Heads" : "Tails";
+                            TheResultDetail = result
+                            console.log(result);
+                            if (result == "Heads") {
+                            coin.material = material[1]; // Show head face
+                            } else {
+                            coin.material = material[2]; // Show tail face
+                            }
+
+                        }
+
+                }
+                animate();
+
+
+            }
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+        // Set camera position
+        camera.position.z = 6;
+        // Render loop
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+
+    </script>
+
+    
+        <div class=" container-fluid bg-dark text-white pt-5 ">
+            <h2>Investment Results</h2>
+            <table class="table table-dark table-hover ">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Money Invest</th>
+                  <th>Result</th>
+                  <th  >Money Get</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr >
+                  <td id="TheName">John Doe</td>
+                  <td id="MoneyInv">$1000</td>
+                  <td id="TheResult" > None </td>
+                  <td id="MoneyGot">$1200</td>
+                </tr>
+                <!-- <tr>
+                  <td>Jane Smith</td>
+                  <td>$1500</td>
+                  <td>-$300</td>
+                  <td>$1200</td>
+                </tr> -->
+                <!-- Add more rows as needed -->
+              </tbody>
+            </table>
+          </div>
+
+          <script>
+                    const TheName = document.getElementById('TheName')
+                    const MoneyInv = document.getElementById('MoneyInv')
+                    const TheResult = document.getElementById('TheResult')
+                    const MoneyGot = document.getElementById('MoneyGot')
+                    addEventListener('click',()=>{
+                        TheResult.innerText= TheResultDetail
+                    })
+          </script>
+</body>
+</html>
